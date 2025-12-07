@@ -12,6 +12,8 @@ variables:
   BACKEND_STORAGE: "testterraformaccount123"
   BACKEND_CONTAINER: "container"
   SERVICE_CONNECTION: "test-sc"
+
+stages:
 - stage: DEV
   displayName: "DEV Deployment"
 
@@ -33,8 +35,8 @@ variables:
         command: 'init'
         workingDirectory: 'projects/environments/dev'
         backendType: 'azurerm'
-        backendServiceArm: $(SERVICE_CONNECTION)
-        backendAzureRmResourceGroupName: $(BACKEND_RG)
-        backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
-        backendAzureRmContainerName: $(BACKEND_CONTAINER)
+        backendServiceArm: '$(SERVICE_CONNECTION)'
+        backendAzureRmResourceGroupName: '$(BACKEND_RG)'
+        backendAzureRmStorageAccountName: '$(BACKEND_STORAGE)'
+        backendAzureRmContainerName: '$(BACKEND_CONTAINER)'
         backendAzureRmKey: 'dev.tfstate'
