@@ -4,142 +4,220 @@ trigger:
       - main
 
 pool:
-  name: Default
+  name: Default  # self-hosted agent
 
 variables:
   TF_VERSION: "1.14.1"
   BACKEND_RG: "storage-ac1"
   BACKEND_STORAGE: "testterraformaccount123"
   BACKEND_CONTAINER: "container"
+  SERVICE_CONNECTION: "test-sc"
 
 # ----------------------------------------------------------
-# Stage 1: DEV
+# DEV ENVIRONMENT
 # ----------------------------------------------------------
 stages:
 - stage: DEV
-  displayName: "Deploy to DEV environment"
+  displayName: "DEV Deployment"
+
   jobs:
   - job: DevJob
+    displayName: "Deploy Dev"
     steps:
 
+    # Install Terraform
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: $(TF_VERSION)
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Init - Dev"
+    # Install TFLint
+    - script: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      displayName: "Install TFLint"
+
+    # Terraform Init
+    - task: TerraformCLI@3
+      displayName: "Terraform Init - DEV"
       inputs:
-        provider: "azurerm"
-        command: "init"
-        workingDirectory: "projects/environments/dev"
-        backendServiceArm: "test-sc"
+        command: 'init'
+        workingDirectory: 'projects/environments/dev'
+        backendType: 'azurerm'
+        ensureBackend: true
+        backendServiceArm: $(SERVICE_CONNECTION)
         backendAzureRmResourceGroupName: $(BACKEND_RG)
         backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
         backendAzureRmContainerName: $(BACKEND_CONTAINER)
-        backendAzureRmKey: "dev.tfstate"
+        backendAzureRmKey: 'dev.tfstate'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Plan - Dev"
+    # Terraform Format
+    - task: TerraformCLI@3
+      displayName: "Terraform FMT - DEV"
       inputs:
-        provider: "azurerm"
-        command: "plan"
-        workingDirectory: "projects/environments/dev"
-        commandOptions: "-var-file=dev.tfvars"
+        command: 'fmt'
+        workingDirectory: 'projects/environments/dev'
+        additionalArguments: '-check -diff'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Apply - Dev"
+    # Terraform Validate
+    - task: TerraformCLI@3
+      displayName: "Terraform VALIDATE - DEV"
       inputs:
-        provider: "azurerm"
-        command: "apply"
-        workingDirectory: "projects/environments/dev"
-        commandOptions: "-var-file=dev.tfvars"
-        allowTelemetryCollection: false
-        environmentServiceNameAzureRM: "test-sc"
+        command: 'validate'
+        workingDirectory: 'projects/environments/dev'
+
+    # TFLint Analysis
+    - script: |
+        tflint --init
+        tflint
+      workingDirectory: 'projects/environments/dev'
+      displayName: "TFLint Analysis - DEV"
+
+    # Terraform Plan
+    - task: TerraformCLI@3
+      displayName: "Terraform Plan - DEV"
+      inputs:
+        command: 'plan'
+        workingDirectory: 'projects/environments/dev'
+        additionalArguments: '-var-file=dev.tfvars'
+
+    # Terraform Apply
+    - task: TerraformCLI@3
+      displayName: "Terraform Apply - DEV"
+      inputs:
+        command: 'apply'
+        workingDirectory: 'projects/environments/dev'
+        additionalArguments: '-var-file=dev.tfvars -auto-approve'
+        azureServiceConnection: $(SERVICE_CONNECTION)
 
 # ----------------------------------------------------------
-# Stage 2: STAGING / QA
+# STAGING (QA)
 # ----------------------------------------------------------
 - stage: STAGING
   dependsOn: DEV
-  displayName: "Deploy to Staging (QA)"
+  displayName: "QA Deployment"
 
   jobs:
   - job: QaJob
+    displayName: "Deploy QA"
     steps:
 
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: $(TF_VERSION)
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Init - Staging"
+    - script: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      displayName: "Install TFLint"
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Init - STAGING"
       inputs:
-        provider: "azurerm"
-        command: "init"
-        workingDirectory: "projects/environments/staging"
-        backendServiceArm: "test-sc"
+        command: 'init'
+        workingDirectory: 'projects/environments/staging'
+        backendType: 'azurerm'
+        ensureBackend: true
+        backendServiceArm: $(SERVICE_CONNECTION)
         backendAzureRmResourceGroupName: $(BACKEND_RG)
         backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
         backendAzureRmContainerName: $(BACKEND_CONTAINER)
-        backendAzureRmKey: "staging.tfstate"
+        backendAzureRmKey: 'staging.tfstate'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Plan - Staging"
+    - task: TerraformCLI@3
+      displayName: "Terraform FMT - STAGING"
       inputs:
-        provider: "azurerm"
-        command: "plan"
-        workingDirectory: "projects/environments/staging"
-        commandOptions: "-var-file=staging.tfvars"
+        command: 'fmt'
+        workingDirectory: 'projects/environments/staging'
+        additionalArguments: '-check -diff'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Apply - Staging"
+    - task: TerraformCLI@3
+      displayName: "Terraform VALIDATE - STAGING"
       inputs:
-        provider: "azurerm"
-        command: "apply"
-        workingDirectory: "projects/environments/staging"
-        commandOptions: "-var-file=staging.tfvars"
-        environmentServiceNameAzureRM: "test-sc"
+        command: 'validate'
+        workingDirectory: 'projects/environments/staging'
+
+    - script: |
+        tflint --init
+        tflint
+      workingDirectory: 'projects/environments/staging'
+      displayName: "TFLint Analysis - STAGING"
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Plan - STAGING"
+      inputs:
+        command: 'plan'
+        workingDirectory: 'projects/environments/staging'
+        additionalArguments: '-var-file=staging.tfvars'
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Apply - STAGING"
+      inputs:
+        command: 'apply'
+        workingDirectory: 'projects/environments/staging'
+        additionalArguments: '-var-file=staging.tfvars -auto-approve'
+        azureServiceConnection: $(SERVICE_CONNECTION)
 
 # ----------------------------------------------------------
-# Stage 3: PRODUCTION
+# PROD
 # ----------------------------------------------------------
 - stage: PROD
   dependsOn: STAGING
-  displayName: "Deploy to PROD"
+  displayName: "PROD Deployment"
 
   jobs:
   - job: ProdJob
+    displayName: "Deploy Prod"
     steps:
 
     - task: TerraformInstaller@1
       inputs:
         terraformVersion: $(TF_VERSION)
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Init - Prod"
+    - script: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+      displayName: "Install TFLint"
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Init - PROD"
       inputs:
-        provider: "azurerm"
-        command: "init"
-        workingDirectory: "projects/environments/production"
-        backendServiceArm: "test-sc"
+        command: 'init'
+        workingDirectory: 'projects/environments/production'
+        backendType: 'azurerm'
+        ensureBackend: true
+        backendServiceArm: $(SERVICE_CONNECTION)
         backendAzureRmResourceGroupName: $(BACKEND_RG)
         backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
         backendAzureRmContainerName: $(BACKEND_CONTAINER)
-        backendAzureRmKey: "prod.tfstate"
+        backendAzureRmKey: 'prod.tfstate'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Plan - Prod"
+    - task: TerraformCLI@3
+      displayName: "Terraform FMT - PROD"
       inputs:
-        provider: "azurerm"
-        command: "plan"
-        workingDirectory: "projects/environments/production"
-        commandOptions: "-var-file=prod.tfvars"
+        command: 'fmt'
+        workingDirectory: 'projects/environments/production'
+        additionalArguments: '-check -diff'
 
-    - task: TerraformTaskV3@3
-      displayName: "Terraform Apply - Prod"
+    - task: TerraformCLI@3
+      displayName: "Terraform VALIDATE - PROD"
       inputs:
-        provider: "azurerm"
-        command: "apply"
-        workingDirectory: "projects/environments/production"
-        commandOptions: "-var-file=prod.tfvars"
-        environmentServiceNameAzureRM: "test-sc"
+        command: 'validate'
+        workingDirectory: 'projects/environments/production'
+
+    - script: |
+        tflint --init
+        tflint
+      workingDirectory: 'projects/environments/production'
+      displayName: "TFLint Analysis - PROD"
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Plan - PROD"
+      inputs:
+        command: 'plan'
+        workingDirectory: 'projects/environments/production'
+        additionalArguments: '-var-file=prod.tfvars'
+
+    - task: TerraformCLI@3
+      displayName: "Terraform Apply - PROD"
+      inputs:
+        command: 'apply'
+        workingDirectory: 'projects/environments/production'
+        additionalArguments: '-var-file=prod.tfvars -auto-approve'
+        azureServiceConnection: $(SERVICE_CONNECTION)
