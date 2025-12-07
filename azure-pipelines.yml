@@ -23,9 +23,11 @@ stages:
 
     steps:
 
-    # Check Terraform installed on agent
-    - script: terraform version
-      displayName: "Check Terraform version"
+    # Ensure Terraform path is available to the TerraformTask@5
+    - script: |
+        echo "##vso[task.setvariable variable=PATH]$PATH:/usr/local/bin"
+        terraform version
+      displayName: "Set PATH & Check Terraform version"
 
     # Terraform init
     - task: TerraformTask@5
@@ -40,4 +42,3 @@ stages:
         backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
         backendAzureRmContainerName: $(BACKEND_CONTAINER)
         backendAzureRmKey: 'dev.tfstate'
-
