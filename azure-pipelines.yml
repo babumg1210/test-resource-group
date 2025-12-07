@@ -20,23 +20,29 @@ stages:
   jobs:
   - job: DevJob
     displayName: "Deploy Dev"
+
     steps:
 
-    # Verify that Terraform is available
+    # Install Terraform into Agent.ToolsDirectory
+    - task: TerraformInstaller@1
+      displayName: "Install Terraform"
+      inputs:
+        terraformVersion: $(TF_VERSION)
+
+    # Check Terraform installed
     - script: |
         echo "Terraform path:"
         which terraform
         terraform version
       displayName: "Check Terraform version"
 
-    # Terraform Init (TerraformTask v5)
+    # Terraform Init
     - task: TerraformTask@5
       displayName: "Terraform Init - DEV"
       inputs:
         provider: 'azurerm'
         command: 'init'
         workingDirectory: 'projects/environments/dev'
-        backendType: 'azurerm'
         backendServiceArm: $(SERVICE_CONNECTION)
         backendAzureRmResourceGroupName: $(BACKEND_RG)
         backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
