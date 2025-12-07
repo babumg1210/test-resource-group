@@ -20,16 +20,16 @@ stages:
   jobs:
   - job: DevJob
     displayName: "Deploy Dev"
-
     steps:
 
-    # Ensure Terraform path is available to the TerraformTask@5
+    # Verify that Terraform is available
     - script: |
-        echo "##vso[task.setvariable variable=PATH]$PATH:/usr/local/bin"
+        echo "Terraform path:"
+        which terraform
         terraform version
-      displayName: "Set PATH & Check Terraform version"
+      displayName: "Check Terraform version"
 
-    # Terraform init
+    # Terraform Init (TerraformTask v5)
     - task: TerraformTask@5
       displayName: "Terraform Init - DEV"
       inputs:
