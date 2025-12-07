@@ -1,3 +1,4 @@
+
 provider "azurerm" {
   features {}
 
@@ -23,4 +24,5 @@ module "network" {
   subnets             = var.subnets
   resource_group_name = module.rg.name
 }
+
 
