@@ -1,0 +1,145 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  TF_VERSION: "1.14.1"
+  BACKEND_RG: "storage-ac1"
+  BACKEND_STORAGE: "testterraformaccount123"
+  BACKEND_CONTAINER: "container"
+
+# ----------------------------------------------------------
+# Stage 1: DEV
+# ----------------------------------------------------------
+stages:
+- stage: DEV
+  displayName: "Deploy to DEV environment"
+  jobs:
+  - job: DevJob
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(TF_VERSION)
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Init - Dev"
+      inputs:
+        provider: "azurerm"
+        command: "init"
+        workingDirectory: "projects/environments/dev"
+        backendServiceArm: "your-service-connection"
+        backendAzureRmResourceGroupName: $(BACKEND_RG)
+        backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
+        backendAzureRmContainerName: $(BACKEND_CONTAINER)
+        backendAzureRmKey: "dev.tfstate"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Plan - Dev"
+      inputs:
+        provider: "azurerm"
+        command: "plan"
+        workingDirectory: "projects/environments/dev"
+        commandOptions: "-var-file=dev.tfvars"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Apply - Dev"
+      inputs:
+        provider: "azurerm"
+        command: "apply"
+        workingDirectory: "projects/environments/dev"
+        commandOptions: "-var-file=dev.tfvars"
+        allowTelemetryCollection: false
+        environmentServiceNameAzureRM: "your-service-connection"
+
+# ----------------------------------------------------------
+# Stage 2: STAGING / QA
+# ----------------------------------------------------------
+- stage: STAGING
+  dependsOn: DEV
+  displayName: "Deploy to Staging (QA)"
+
+  jobs:
+  - job: QaJob
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(TF_VERSION)
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Init - Staging"
+      inputs:
+        provider: "azurerm"
+        command: "init"
+        workingDirectory: "projects/environments/staging"
+        backendServiceArm: "your-service-connection"
+        backendAzureRmResourceGroupName: $(BACKEND_RG)
+        backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
+        backendAzureRmContainerName: $(BACKEND_CONTAINER)
+        backendAzureRmKey: "staging.tfstate"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Plan - Staging"
+      inputs:
+        provider: "azurerm"
+        command: "plan"
+        workingDirectory: "projects/environments/staging"
+        commandOptions: "-var-file=staging.tfvars"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Apply - Staging"
+      inputs:
+        provider: "azurerm"
+        command: "apply"
+        workingDirectory: "projects/environments/staging"
+        commandOptions: "-var-file=staging.tfvars"
+        environmentServiceNameAzureRM: "your-service-connection"
+
+# ----------------------------------------------------------
+# Stage 3: PRODUCTION
+# ----------------------------------------------------------
+- stage: PROD
+  dependsOn: STAGING
+  displayName: "Deploy to PROD"
+
+  jobs:
+  - job: ProdJob
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: $(TF_VERSION)
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Init - Prod"
+      inputs:
+        provider: "azurerm"
+        command: "init"
+        workingDirectory: "projects/environments/production"
+        backendServiceArm: "your-service-connection"
+        backendAzureRmResourceGroupName: $(BACKEND_RG)
+        backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
+        backendAzureRmContainerName: $(BACKEND_CONTAINER)
+        backendAzureRmKey: "prod.tfstate"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Plan - Prod"
+      inputs:
+        provider: "azurerm"
+        command: "plan"
+        workingDirectory: "projects/environments/production"
+        commandOptions: "-var-file=prod.tfvars"
+
+    - task: TerraformTaskV3@3
+      displayName: "Terraform Apply - Prod"
+      inputs:
+        provider: "azurerm"
+        command: "apply"
+        workingDirectory: "projects/environments/production"
+        commandOptions: "-var-file=prod.tfvars"
+        environmentServiceNameAzureRM: "your-service-connection"
