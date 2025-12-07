@@ -20,14 +20,14 @@ stages:
   jobs:
   - job: DevJob
     displayName: "Deploy Dev"
+
     steps:
 
-    # Install Terraform binary
-    - task: TerraformInstaller@1
-      inputs:
-        terraformVersion: $(TF_VERSION)
+    # Check Terraform installed on agent
+    - script: terraform version
+      displayName: "Check Terraform version"
 
-    # Terraform init using TerraformTask v5
+    # Terraform init
     - task: TerraformTask@5
       displayName: "Terraform Init - DEV"
       inputs:
@@ -35,8 +35,9 @@ stages:
         command: 'init'
         workingDirectory: 'projects/environments/dev'
         backendType: 'azurerm'
-        backendServiceArm: '$(SERVICE_CONNECTION)'
-        backendAzureRmResourceGroupName: '$(BACKEND_RG)'
-        backendAzureRmStorageAccountName: '$(BACKEND_STORAGE)'
-        backendAzureRmContainerName: '$(BACKEND_CONTAINER)'
+        backendServiceArm: $(SERVICE_CONNECTION)
+        backendAzureRmResourceGroupName: $(BACKEND_RG)
+        backendAzureRmStorageAccountName: $(BACKEND_STORAGE)
+        backendAzureRmContainerName: $(BACKEND_CONTAINER)
         backendAzureRmKey: 'dev.tfstate'
+
