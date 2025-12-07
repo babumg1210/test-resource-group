@@ -54,7 +54,7 @@ stages:
         workingDirectory: "projects/environments/dev"
         commandOptions: "-var-file=dev.tfvars"
         allowTelemetryCollection: false
-        environmentServiceNameAzureRM: "your-service-connection"
+        environmentServiceNameAzureRM: "test-sc"
 
 # ----------------------------------------------------------
 # Stage 2: STAGING / QA
@@ -98,7 +98,7 @@ stages:
         command: "apply"
         workingDirectory: "projects/environments/staging"
         commandOptions: "-var-file=staging.tfvars"
-        environmentServiceNameAzureRM: "your-service-connection"
+        environmentServiceNameAzureRM: "test-sc"
 
 # ----------------------------------------------------------
 # Stage 3: PRODUCTION
@@ -142,4 +142,4 @@ stages:
         command: "apply"
         workingDirectory: "projects/environments/production"
         commandOptions: "-var-file=prod.tfvars"
-        environmentServiceNameAzureRM: "your-service-connection"
+        environmentServiceNameAzureRM: "test-sc"
