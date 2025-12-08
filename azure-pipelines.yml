@@ -7,12 +7,11 @@ pool:
   name: Default   # Self-hosted agent
 
 variables:
-  TF_VERSION: "1.14.1"
+  SERVICE_CONNECTION: "test-sc"
   BACKEND_RG: "storage-ac1"
   BACKEND_STORAGE: "testterraformaccount123"
-  BACKEND_CONTAINER: "continaer"
-  BACKEND_KEY: "dev.tfstate"
-  SERVICE_CONNECTION: "test-sc"
+  BACKEND_CONTAINER: "terraform"
+  BACKEND_KEY: "terraform.tfstate"
   WORK_DIR: "$(System.DefaultWorkingDirectory)/projects/environments/dev"
 
 stages:
