@@ -1,4 +1,22 @@
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "storage-ac1"
+    storage_account_name = "testterraformaccount123"
+    container_name       = "terraform"
+    key                  = "dev.tfstate"
+  }
 
+  required_providers {
+    azurerm = {
+      source = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
 provider "azurerm" {
   features {}
 
@@ -24,5 +42,6 @@ module "network" {
   subnets             = var.subnets
   resource_group_name = module.rg.name
 }
+
 
 
