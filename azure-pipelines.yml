@@ -11,7 +11,7 @@ variables:
   BACKEND_RG: "storage-ac1"
   BACKEND_STORAGE: "testterraformaccount123"
   BACKEND_CONTAINER: "terraform"
-  BACKEND_KEY: "terraform.tfstate"
+  BACKEND_KEY: "dev.tfstate"
   WORK_DIR: "$(System.DefaultWorkingDirectory)/projects/environments/dev"
 
 stages:
